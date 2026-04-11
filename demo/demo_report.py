@@ -1,9 +1,9 @@
 """Demo: Smoldyn multi-configuration spatial stochastic simulation report.
 
-Runs three distinct particle-based simulations (diffusion gradient,
-predator-prey dynamics, enzymatic reaction), generates interactive 2D
-particle viewers, Plotly charts, bigraph-viz diagrams, and navigatable
-PBG document trees -- all in a single self-contained HTML.
+Runs four distinct particle-based simulations (diffusion gradient,
+predator-prey dynamics, enzymatic reaction, cyclic dominance), generates
+interactive 2D particle viewers, Plotly charts, bigraph-viz diagrams,
+and navigatable PBG document trees -- all in a single self-contained HTML.
 """
 
 import json
@@ -43,8 +43,8 @@ CONFIGS = [
             },
             'reactions': [],
         },
-        'n_snapshots': 30,
-        'total_time': 60.0,
+        'n_snapshots': 60,
+        'total_time': 200.0,
         'color_scheme': 'indigo',
     },
     {
@@ -76,8 +76,8 @@ CONFIGS = [
                 {'name': 'death', 'subs': ['predator'], 'prds': [], 'rate': 0.2},
             ],
         },
-        'n_snapshots': 30,
-        'total_time': 30.0,
+        'n_snapshots': 60,
+        'total_time': 120.0,
         'color_scheme': 'emerald',
     },
     {
@@ -110,9 +110,55 @@ CONFIGS = [
                 {'name': 'catalyze', 'subs': ['ES'], 'prds': ['E', 'P'], 'rate': 0.8},
             ],
         },
-        'n_snapshots': 30,
-        'total_time': 30.0,
+        'n_snapshots': 60,
+        'total_time': 100.0,
         'color_scheme': 'rose',
+    },
+    {
+        'id': 'rps',
+        'title': 'Cyclic Dominance (Rock-Paper-Scissors)',
+        'subtitle': 'Three-species spatial competition with rotating dominance',
+        'description': (
+            'A spatial rock-paper-scissors system where three species '
+            'compete cyclically: Rock (red) beats Scissors (blue), '
+            'Scissors beats Paper (green), and Paper beats Rock. '
+            'Each species reproduces slowly and is regulated by '
+            'density-dependent crowding death. Starting from spatially '
+            'segregated populations (thirds of the domain), the '
+            'species mix through diffusion and competition. Periodic '
+            'boundaries allow populations to chase each other in cycles. '
+            'This models biodiversity maintenance through intransitive '
+            'competition -- a key mechanism in microbial ecology.'
+        ),
+        'config': {
+            'dimensions': 2,
+            'bounds': [[0, 100], [0, 100]],
+            'boundary_type': 'p',
+            'dt': 0.01,
+            'seed': 42,
+            'species': {
+                'Rock': {'difc': 2.0, 'count': 250, 'color': 'red'},
+                'Paper': {'difc': 2.0, 'count': 250, 'color': 'green'},
+                'Scissors': {'difc': 2.0, 'count': 250, 'color': 'blue'},
+            },
+            'reactions': [
+                # Self-reproduction
+                {'name': 'rock_repro', 'subs': ['Rock'], 'prds': ['Rock', 'Rock'], 'rate': 0.08},
+                {'name': 'paper_repro', 'subs': ['Paper'], 'prds': ['Paper', 'Paper'], 'rate': 0.08},
+                {'name': 'scissors_repro', 'subs': ['Scissors'], 'prds': ['Scissors', 'Scissors'], 'rate': 0.08},
+                # Cyclic predation
+                {'name': 'rock_beats_scissors', 'subs': ['Rock', 'Scissors'], 'prds': ['Rock'], 'rate': 8.0},
+                {'name': 'paper_beats_rock', 'subs': ['Paper', 'Rock'], 'prds': ['Paper'], 'rate': 8.0},
+                {'name': 'scissors_beats_paper', 'subs': ['Scissors', 'Paper'], 'prds': ['Scissors'], 'rate': 8.0},
+                # Density-dependent death (crowding)
+                {'name': 'rock_crowd', 'subs': ['Rock', 'Rock'], 'prds': ['Rock'], 'rate': 0.5},
+                {'name': 'paper_crowd', 'subs': ['Paper', 'Paper'], 'prds': ['Paper'], 'rate': 0.5},
+                {'name': 'scissors_crowd', 'subs': ['Scissors', 'Scissors'], 'prds': ['Scissors'], 'rate': 0.5},
+            ],
+        },
+        'n_snapshots': 60,
+        'total_time': 200.0,
+        'color_scheme': 'amber',
     },
 ]
 
@@ -126,6 +172,9 @@ SPECIES_COLORS = {
     'S': '#3b82f6',      # blue
     'ES': '#f97316',     # orange
     'P': '#22c55e',      # green
+    'Rock': '#ef4444',   # red
+    'Paper': '#22c55e',  # green
+    'Scissors': '#3b82f6',  # blue
 }
 
 
@@ -246,6 +295,8 @@ COLOR_SCHEMES = {
                 'bg': '#ecfdf5', 'accent': '#34d399', 'text': '#064e3b'},
     'rose': {'primary': '#f43f5e', 'light': '#ffe4e6', 'dark': '#e11d48',
              'bg': '#fff1f2', 'accent': '#fb7185', 'text': '#881337'},
+    'amber': {'primary': '#f59e0b', 'light': '#fef3c7', 'dark': '#d97706',
+              'bg': '#fffbeb', 'accent': '#fbbf24', 'text': '#78350f'},
 }
 
 
@@ -475,7 +526,7 @@ body {{ font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-seri
 
 <div class="page-header">
   <h1>Smoldyn Spatial Stochastic Simulation Report</h1>
-  <p>Three particle-based spatial stochastic simulations wrapped as <strong>process-bigraph</strong>
+  <p>Four particle-based spatial stochastic simulations wrapped as <strong>process-bigraph</strong>
   Processes using the Smoldyn simulator. Each configuration demonstrates
   a distinct reaction-diffusion scenario with interactive particle visualization.</p>
 </div>
