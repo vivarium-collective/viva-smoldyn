@@ -2,6 +2,8 @@
 
 Process-bigraph wrapper for the [Smoldyn](http://www.smoldyn.org/) particle-based spatial stochastic simulator.
 
+**[View Interactive Demo Report](https://vivarium-collective.github.io/pbg-smoldyn/)** -- MinDE oscillations, Lotka-Volterra, and gene expression with 3D particle viewers, Plotly charts, and bigraph architecture diagrams.
+
 Smoldyn simulates biochemical reaction networks with spatial resolution at the single-molecule level using Brownian dynamics. This package wraps Smoldyn as a `process-bigraph` Process, enabling it to be composed with other simulation tools in modular, hierarchical simulations.
 
 ## Installation
