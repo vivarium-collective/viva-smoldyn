@@ -1,0 +1,74 @@
+name: diffusion-reaction-demo
+description: "Tiny Smoldyn diffusion-reaction demo: species A (fast) diffuses and converts to species B (slow) via a first-order reaction in a 2D reflecting box. Emits per-species molecule counts and simulation time each step."
+
+requires:
+  processes: [SmoldynProcess, RAMEmitter]
+
+parameters:
+  interval:
+    type: float
+    default: 5.0
+    description: "Process interval in simulation time units. Each update advances Smoldyn via runUntil() by this amount."
+  dt:
+    type: float
+    default: 0.01
+    description: "Smoldyn internal timestep."
+  count_a:
+    type: int
+    default: 200
+    description: "Initial count of species A."
+  count_b:
+    type: int
+    default: 0
+    description: "Initial count of species B."
+  rate_ab:
+    type: float
+    default: 0.01
+    description: "First-order reaction rate constant for A -> B."
+
+state:
+  smoldyn:
+    _type: process
+    address: "local:SmoldynProcess"
+    config:
+      dimensions: 2
+      bounds:
+        - [0, 100]
+        - [0, 100]
+      boundary_type: r
+      dt: "${dt}"
+      seed: 12345
+      species:
+        A:
+          difc: 1.0
+          count: "${count_a}"
+          color: red
+          display_size: 3
+        B:
+          difc: 0.3
+          count: "${count_b}"
+          color: blue
+          display_size: 3
+      reactions:
+        - name: convert
+          subs: [A]
+          prds: [B]
+          rate: "${rate_ab}"
+    inputs: {}
+    outputs:
+      molecule_counts: ["stores", "molecule_counts"]
+      time: ["stores", "time"]
+    interval: "${interval}"
+  stores:
+    molecule_counts: {}
+    time: 0.0
+  emitter:
+    _type: step
+    address: "local:ram-emitter"
+    config:
+      emit:
+        molecule_counts: "map[integer]"
+        time: "float"
+    inputs:
+      molecule_counts: ["stores", "molecule_counts"]
+      time: ["stores", "time"]
