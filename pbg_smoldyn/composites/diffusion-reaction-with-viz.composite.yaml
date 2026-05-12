@@ -1,5 +1,6 @@
 name: diffusion-reaction-with-viz
 description: "Smoldyn diffusion-reaction demo with a wired Visualization Step. Each update produces a Plotly HTML figure of the running molecule-count trajectories, written to the 'viz_html' store."
+tags: [particles, reaction-diffusion, demo, visualization]
 
 requires:
   processes: [SmoldynProcess, SmoldynPlots, RAMEmitter]

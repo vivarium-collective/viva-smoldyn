@@ -1,5 +1,6 @@
 name: diffusion-reaction-demo
 description: "Tiny Smoldyn diffusion-reaction demo: species A (fast) diffuses and converts to species B (slow) via a first-order reaction in a 2D reflecting box. Emits per-species molecule counts and simulation time each step."
+tags: [particles, reaction-diffusion, demo]
 
 requires:
   processes: [SmoldynProcess, RAMEmitter]
