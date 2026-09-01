@@ -1,0 +1,17 @@
+schema_version: 2
+name: smoldyn-simularium
+title: smoldyn-simularium
+created: '2026-09-01'
+status: planning
+runtime:
+  default_emitter: sqlite
+description: 'Smoldyn particle simulations rendered as Simularium trajectories: reversible
+  dimerization, differential diffusion, and enzyme kinetics.
+
+  '
+studies:
+- smoldyn-dimerization
+- smoldyn-crowding
+- smoldyn-enzyme-kinetics
+expert_docs: []
+acceptance_criteria: []

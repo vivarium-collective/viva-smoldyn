@@ -1,0 +1,53 @@
+name: reversible-dimerization
+description: "Smoldyn 3D reversible dimerization: fast red monomers A diffuse and bind pairwise into slower blue dimers B (A + A <-> B) in a reflecting cubic box. Emits per-species counts, per-molecule positions, and time each step — the positions drive a Simularium trajectory."
+tags: [particles, reaction-diffusion, 3d, simularium]
+
+requires:
+  processes: [SmoldynProcess]
+
+# Declare a PERSISTENT emitter + the paths it records. The workbench honors this
+# (parquet sink; falls back to the workspace default otherwise) and the study
+# flush reads the resulting store — no RAM emitter, which wouldn't persist.
+emitters:
+  - address: "local:ParquetEmitter"
+    paths: [molecule_counts, molecule_positions, time]
+
+state:
+  smoldyn:
+    _type: process
+    address: "local:SmoldynProcess"
+    config:
+      dimensions: 3
+      bounds:
+        - [0, 50]
+        - [0, 50]
+        - [0, 50]
+      boundary_type: r
+      dt: 0.01
+      seed: 12345
+      species:
+        A:
+          difc: 3.0
+          count: 250
+          color: red
+          display_size: 1.2
+        B:
+          difc: 1.0
+          count: 0
+          color: blue
+          display_size: 2.0
+      reactions:
+        - name: dimerize
+          subs: [A, A]
+          prds: [B]
+          rate: 2.0
+          kb: 0.15
+    inputs: {}
+    outputs:
+      molecule_counts: [molecule_counts]
+      molecule_positions: [molecule_positions]
+      time: [time]
+    interval: 0.5
+  molecule_counts: {}
+  molecule_positions: []
+  time: 0.0

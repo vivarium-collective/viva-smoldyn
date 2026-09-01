@@ -1,0 +1,34 @@
+name: smoldyn-dimerization
+description: ''
+composites:
+- name: reversible-dimerization
+  source: viva_smoldyn.composites.reversible-dimerization
+  document: ./composites/reversible-dimerization.yaml
+simulations:
+- name: baseline
+  composite: reversible-dimerization
+  kind: single
+  overrides: {}
+  steps: 10
+observables: []
+visualizations: []
+analyses:
+- name: simularium
+  params:
+    box_size:
+    - 50
+    - 50
+    - 50
+    title: Reversible dimerization (Smoldyn 3D)
+    spatial_unit: nm
+    time_unit: s
+    display:
+      A:
+        color: '#ff5500'
+        radius: 1.2
+      B:
+        color: '#0088ff'
+        radius: 2.0
+    fmt: json
+status: planned
+investigation: smoldyn-simularium

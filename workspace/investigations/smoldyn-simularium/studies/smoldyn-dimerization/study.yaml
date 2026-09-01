@@ -1,0 +1,301 @@
+name: smoldyn-dimerization
+description: ''
+simulations:
+- name: baseline
+  composite: reversible-dimerization
+  kind: single
+  overrides: {}
+  steps: 10
+observables: []
+visualizations: []
+analyses:
+- name: simularium
+  params:
+    box_size:
+    - 50
+    - 50
+    - 50
+    title: Reversible dimerization (Smoldyn 3D)
+    spatial_unit: nm
+    time_unit: s
+    display:
+      A:
+        color: '#ff5500'
+        radius: 1.2
+      B:
+        color: '#0088ff'
+        radius: 2.0
+    fmt: json
+status: planned
+runs:
+- name: viva_smoldyn.composites.reversible-dimerization__1788274878__0d29e3
+  status: completed
+  timestamp: 1788274879.7102468
+  emitter:
+    kind: unknown
+  env_id: 2f840242f478225d
+  params: '{}'
+  computed_outcomes:
+    _status: store_unresolved
+  provenance:
+    params:
+      n_steps:
+        value: 40
+        source: resolved
+    params_captured_at: '2026-09-01'
+    params_source: dashboard-runner
+- name: viva_smoldyn.composites.reversible-dimerization__1788274804__9c6007
+  status: failed
+  timestamp: 1788274806.194326
+  emitter:
+    kind: unknown
+  env_id: 2f840242f478225d
+  params: '{}'
+  computed_outcomes:
+    _status: store_unresolved
+- name: viva_smoldyn.composites.reversible-dimerization__1788274793__3284ba
+  status: failed
+  timestamp: 1788274796.410357
+  emitter:
+    kind: unknown
+  env_id: 2f840242f478225d
+  params: '{}'
+  computed_outcomes:
+    _status: store_unresolved
+- name: viva_smoldyn.composites.reversible-dimerization__1788274739__b01ae8
+  status: failed
+  timestamp: 1788274741.4596071
+  emitter:
+    kind: unknown
+  env_id: 2f840242f478225d
+  params: '{}'
+  computed_outcomes:
+    _status: store_unresolved
+- name: viva_smoldyn.composites.reversible-dimerization__1788274732__da33a1
+  status: failed
+  timestamp: 1788274733.965342
+  emitter:
+    kind: unknown
+  env_id: 2f840242f478225d
+  params: '{}'
+  computed_outcomes:
+    _status: store_unresolved
+- name: viva_smoldyn.composites.reversible-dimerization__1788274691__d99ba8
+  status: failed
+  timestamp: 1788274692.9388711
+  emitter:
+    kind: unknown
+  env_id: 2f840242f478225d
+  params: '{}'
+  computed_outcomes:
+    _status: store_unresolved
+- name: viva_smoldyn.composites.reversible-dimerization__1788274610__c73c53
+  status: failed
+  timestamp: 1788274610.89781
+  emitter:
+    kind: unknown
+  env_id: 2f840242f478225d
+  params: '{}'
+  computed_outcomes:
+    _status: store_unresolved
+- name: viva_smoldyn.composites.reversible-dimerization__1788274602__c233c8
+  status: failed
+  timestamp: 1788274603.5071812
+  emitter:
+    kind: unknown
+  env_id: 2f840242f478225d
+  params: '{}'
+  computed_outcomes:
+    _status: store_unresolved
+- name: viva_smoldyn.composites.reversible-dimerization__1788274595__a82835
+  status: failed
+  timestamp: 1788274596.4888809
+  emitter:
+    kind: unknown
+  env_id: 2f840242f478225d
+  params: '{}'
+  computed_outcomes:
+    _status: store_unresolved
+- name: viva_smoldyn.composites.reversible-dimerization__1788274886__c01658
+  status: completed
+  timestamp: 1788274887.931925
+  emitter:
+    kind: unknown
+  env_id: 2f840242f478225d
+  params: '{}'
+  computed_outcomes:
+    _status: store_unresolved
+  provenance:
+    params:
+      n_steps:
+        value: 40
+        source: resolved
+    params_captured_at: '2026-09-01'
+    params_source: dashboard-runner
+- name: viva_smoldyn.composites.reversible-dimerization__1788274950__b23b42
+  status: completed
+  timestamp: 1788274951.85517
+  emitter:
+    kind: unknown
+  env_id: 2f840242f478225d
+  params: '{}'
+  computed_outcomes:
+    _status: store_unresolved
+  provenance:
+    params:
+      n_steps:
+        value: 40
+        source: resolved
+    params_captured_at: '2026-09-01'
+    params_source: dashboard-runner
+- name: viva_smoldyn.composites.reversible-dimerization__1788275015__ba2816
+  status: completed
+  timestamp: 1788275016.602664
+  emitter:
+    kind: unknown
+  env_id: 2f840242f478225d
+  params: '{}'
+  computed_outcomes:
+    _status: store_unresolved
+  provenance:
+    params:
+      n_steps:
+        value: 40
+        source: resolved
+    params_captured_at: '2026-09-01'
+    params_source: dashboard-runner
+- name: viva_smoldyn.composites.reversible-dimerization__1788275084__449e4c
+  status: completed
+  timestamp: 1788275085.580549
+  emitter:
+    kind: unknown
+  env_id: 2f840242f478225d
+  params: '{}'
+  computed_outcomes:
+    _status: store_unresolved
+  provenance:
+    params:
+      n_steps:
+        value: 40
+        source: resolved
+    params_captured_at: '2026-09-01'
+    params_source: dashboard-runner
+- name: viva_smoldyn.composites.reversible-dimerization__1788277588__58ff52
+  status: completed
+  timestamp: 1788277590.7516532
+  emitter:
+    kind: unknown
+  env_id: 77a0e9b0df43cbf0
+  params: '{}'
+  computed_outcomes:
+    _status: store_unresolved
+  provenance:
+    params:
+      n_steps:
+        value: 20
+        source: resolved
+    params_captured_at: '2026-09-01'
+    params_source: dashboard-runner
+- name: viva_smoldyn.composites.reversible-dimerization__1788277809__42094a
+  status: completed
+  timestamp: 1788277811.299689
+  emitter:
+    kind: unknown
+  env_id: 77a0e9b0df43cbf0
+  params: '{}'
+  computed_outcomes:
+    _status: store_unresolved
+  provenance:
+    params:
+      n_steps:
+        value: 20
+        source: resolved
+    params_captured_at: '2026-09-01'
+    params_source: dashboard-runner
+- name: viva_smoldyn.composites.reversible-dimerization__1788278125__409439
+  status: completed
+  timestamp: 1788278126.876983
+  emitter:
+    kind: unknown
+  env_id: 77a0e9b0df43cbf0
+  params: '{}'
+  computed_outcomes:
+    _status: store_unresolved
+  provenance:
+    params:
+      n_steps:
+        value: 20
+        source: resolved
+    params_captured_at: '2026-09-01'
+    params_source: dashboard-runner
+- name: viva_smoldyn.composites.reversible-dimerization__1788278198__9a8a66
+  status: completed
+  timestamp: 1788278200.0085812
+  emitter:
+    kind: unknown
+  env_id: 77a0e9b0df43cbf0
+  params: '{}'
+  computed_outcomes:
+    _status: store_unresolved
+  provenance:
+    params:
+      n_steps:
+        value: 20
+        source: resolved
+    params_captured_at: '2026-09-01'
+    params_source: dashboard-runner
+- name: viva_smoldyn.composites.reversible-dimerization__1788278337__13904d
+  status: completed
+  timestamp: 1788278338.85344
+  emitter:
+    kind: unknown
+  env_id: 77a0e9b0df43cbf0
+  params: '{}'
+  computed_outcomes:
+    _status: store_unresolved
+  provenance:
+    params:
+      n_steps:
+        value: 30
+        source: resolved
+    params_captured_at: '2026-09-01'
+    params_source: dashboard-runner
+- name: viva_smoldyn.composites.reversible-dimerization__1788278392__a8881c
+  status: completed
+  timestamp: 1788278393.832184
+  emitter:
+    kind: unknown
+  env_id: 77a0e9b0df43cbf0
+  params: '{}'
+  computed_outcomes:
+    _status: store_unresolved
+  provenance:
+    params:
+      n_steps:
+        value: 30
+        source: resolved
+    params_captured_at: '2026-09-01'
+    params_source: dashboard-runner
+pipeline_gate:
+  gate_evaluator:
+    result: not_started
+    blocked_by: []
+    evaluated_by: code
+    diverges_from_authored: false
+baseline: reversible-dimerization
+variants:
+- name: reversible-dimerization
+  source: viva_smoldyn.composites.reversible-dimerization
+  document: ./composites/reversible-dimerization.yaml
+comparisons: []
+groups: []
+conclusions: ''
+question: ''
+hypothesis: ''
+topic: ''
+simulation_set:
+- name: reversible-dimerization
+  kind: single
+  base_model: null
+  status: ran
+investigation: smoldyn-simularium

@@ -1,0 +1,35 @@
+name: enzyme-kinetics
+description: "Smoldyn 3D Michaelis-Menten enzyme kinetics: enzyme E (purple) binds substrate S (orange) into complex ES (red), which turns over to product P (blue) and frees E (E + S <-> ES -> E + P). Emits per-molecule positions for a Simularium trajectory."
+tags: [particles, reaction-diffusion, 3d, enzyme, simularium]
+requires:
+  processes: [SmoldynProcess]
+emitters:
+  - address: "local:ParquetEmitter"
+    paths: [molecule_counts, molecule_positions, time]
+state:
+  smoldyn:
+    _type: process
+    address: "local:SmoldynProcess"
+    config:
+      dimensions: 3
+      bounds: [[0, 50], [0, 50], [0, 50]]
+      boundary_type: r
+      dt: 0.01
+      seed: 3
+      species:
+        E:  {difc: 1.0, count: 40,  color: purple, display_size: 2.0}
+        S:  {difc: 3.0, count: 200, color: orange, display_size: 1.2}
+        ES: {difc: 1.0, count: 0,   color: red,    display_size: 2.2}
+        P:  {difc: 3.0, count: 0,   color: blue,   display_size: 1.2}
+      reactions:
+        - {name: bind,     subs: [E, S], prds: [ES], rate: 3.0, kb: 1.0}
+        - {name: catalyze, subs: [ES],   prds: [E, P], rate: 2.0}
+    inputs: {}
+    outputs:
+      molecule_counts: [molecule_counts]
+      molecule_positions: [molecule_positions]
+      time: [time]
+    interval: 0.5
+  molecule_counts: {}
+  molecule_positions: []
+  time: 0.0
