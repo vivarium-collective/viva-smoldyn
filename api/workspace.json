@@ -1,0 +1,1 @@
+{"name": "smoldyn", "description": "", "imports": {}, "investigations": [{"name": "smoldyn-simularium", "title": "smoldyn-simularium", "status": "planning", "description": "Smoldyn particle simulations rendered as Simularium trajectories: reversible dimerization, differential diffusion, and enzyme kinetics.\n"}]}

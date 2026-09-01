@@ -1,0 +1,7 @@
+{
+  "mode": "snapshot",
+  "smsApiBase": "",
+  "repo": "https://github.com/vivarium-collective/viva-smoldyn.git",
+  "commit": "ae3ab27a0a049478442cab4eb602e39d196a6254",
+  "generated_from_ref": "smoldyn-studies"
+}
