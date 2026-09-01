@@ -1,153 +1,101 @@
 # viva-smoldyn
 
-Process-bigraph wrapper for the [Smoldyn](http://www.smoldyn.org/) particle-based spatial stochastic simulator.
+Process-bigraph wrapper for the [Smoldyn](http://www.smoldyn.org/) particle-based
+spatial stochastic simulator, with **[Simularium](https://simularium.allencell.org/)
+trajectory export** so a run's particle motion can be replayed in 3D.
 
-**[View Interactive Demo Report](https://vivarium-collective.github.io/viva-smoldyn/)** -- MinDE oscillations, Lotka-Volterra, and gene expression with 3D particle viewers, Plotly charts, and bigraph architecture diagrams.
+**▶ [Open the read-only dashboard](https://vivarium-collective.github.io/viva-smoldyn/)**
+— browse the `smoldyn-simularium` investigation (reversible dimerization,
+differential diffusion, enzyme kinetics), inspect each model's config, and open
+its trajectory in the **Simularium Viewer** right in the browser.
 
-Smoldyn simulates biochemical reaction networks with spatial resolution at the single-molecule level using Brownian dynamics. This package wraps Smoldyn as a `process-bigraph` Process, enabling it to be composed with other simulation tools in modular, hierarchical simulations.
+Smoldyn simulates biochemical reaction networks with spatial resolution at the
+single-molecule level using Brownian dynamics. This package wraps Smoldyn as a
+`process-bigraph` Process, so it composes with other simulators and runs through
+the [vivarium-workbench](https://github.com/vivarium-collective/vivarium-workbench)
+as Studies.
+
+## What's inside
+
+- **`SmoldynProcess`** (`viva_smoldyn/processes.py`) — a time-driven Process that
+  builds a Smoldyn simulation from config (species, reactions, boundary geometry),
+  advances it with `runUntil()`, and emits `molecule_counts`, per-molecule
+  `molecule_positions` (`{type, x, y, z, radius}`), and `time` each step.
+- **Simularium export** — the per-step positions feed
+  [viva-simularium](https://github.com/vivarium-collective/viva-simularium)'s
+  `SimulariumAnalysis`, a post-sim analysis that writes a `.simularium`
+  trajectory. In a workbench Study it runs automatically in the Evaluate-stage
+  flush; the **Simularium Viewer** analysis tool opens the result.
+- **A workspace + studies** — this repo is also a process-bigraph workspace
+  (`workspace.yaml`, `viva_smoldyn.build_core`). The `smoldyn-simularium`
+  investigation ships three studies, each with a `.simularium` trajectory:
+  | Study | Model |
+  |---|---|
+  | `smoldyn-dimerization` | reversible dimerization `A + A ⇌ B` (3D) |
+  | `smoldyn-crowding` | three species diffusing at different rates, demixing by mobility (3D) |
+  | `smoldyn-enzyme-kinetics` | Michaelis–Menten `E + S ⇌ ES → E + P` (3D) |
 
 ## Installation
 
-Smoldyn requires building from source on Apple Silicon. After building:
+Smoldyn ships a Python module; on Apple Silicon use a native (arm64) build. Then:
 
 ```bash
 git clone https://github.com/vivarium-collective/viva-smoldyn.git
 cd viva-smoldyn
-python -m venv .venv
-source .venv/bin/activate
+python -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"
 ```
 
-## Quick Start
+## Quick start
 
 ```python
-from process_bigraph import Composite, allocate_core, gather_emitter_results
-from process_bigraph.emitter import RAMEmitter
-from viva_smoldyn import SmoldynProcess, make_smoldyn_document
+from process_bigraph import Composite, gather_emitter_results
+from viva_smoldyn.composites import build_composite
 
-core = allocate_core()
-core.register_link('SmoldynProcess', SmoldynProcess)
-core.register_link('ram-emitter', RAMEmitter)
+sim = build_composite("reversible-dimerization")
+for _ in range(40):
+    sim.update({}, 0.5)
 
-doc = make_smoldyn_document(
-    species={
-        'A': {'difc': 1.0, 'count': 200},
-        'B': {'difc': 0.5, 'count': 50},
-    },
-    reactions=[
-        {'name': 'convert', 'subs': ['A'], 'prds': ['B'], 'rate': 0.01},
-    ],
-    interval=5.0,
-)
-
-sim = Composite({'state': doc}, core=core)
-sim.run(50.0)
-
-results = gather_emitter_results(sim)
-for entry in results[('emitter',)]:
-    print(f"t={entry['time']:.0f}  counts={entry['molecule_counts']}")
+rows = next(iter(gather_emitter_results(sim).values()))
+print(rows[-1]["molecule_counts"])           # {'A': ..., 'B': ...}
+print(len(rows[-1]["molecule_positions"]))   # per-molecule positions
 ```
 
-## API Reference
-
-### SmoldynProcess
-
-A time-driven `Process` that wraps a Smoldyn simulation using the bridge pattern.
-
-**Config:**
-
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `dimensions` | int | 2 | Spatial dimensionality (2 or 3) |
-| `bounds` | list | [[0,100],[0,100]] | Per-dimension [low, high] boundaries |
-| `boundary_type` | str | 'r' | Boundary condition ('r'=reflect, 'p'=periodic, 'a'=absorb) |
-| `dt` | float | 0.01 | Simulation timestep |
-| `seed` | int | -1 | Random seed (-1 = random) |
-| `species` | dict | {} | Species definitions: `{name: {difc, count, color}}` |
-| `reactions` | list | [] | Reactions: `[{name, subs, prds, rate, kb(optional)}]` |
-
-**Outputs:**
-
-| Port | Type | Description |
-|------|------|-------------|
-| `molecule_counts` | map[integer] | Current count per species |
-| `molecule_positions` | list | Per-step point agents `[{type, x, y, z, radius}, ...]` (the shape [viva-simularium](https://github.com/vivarium-collective/viva-simularium) consumes) |
-| `time` | float | Current simulation time |
-
-**Additional methods:**
-
-- `get_molecule_positions()` — Returns the current positions as a list of point agents `{type, x, y, z, radius}` (`z` is 0.0 for 2D sims).
-
-### make_smoldyn_document()
-
-Factory function that returns a composite document dict with `SmoldynProcess`, stores, and a RAM emitter pre-wired.
-
-## Architecture
-
-```
-                    ┌─────────────────────┐
-                    │   SmoldynProcess    │
-                    │  (bridge pattern)    │
-                    │                     │
-  config ──────────►│  _build_simulation() │
-  (species,         │  runUntil(interval)  │
-   reactions,       │  getMoleculeCount()  │
-   bounds, dt)      └─────────┬───────────┘
-                              │
-                    ┌─────────▼───────────┐
-                    │       stores        │
-                    │  molecule_counts: {} │
-                    │  time: float        │
-                    └─────────┬───────────┘
-                              │
-                    ┌─────────▼───────────┐
-                    │    ram-emitter       │
-                    │  (time series data)  │
-                    └─────────────────────┘
-```
-
-The wrapper uses Smoldyn's `runUntil()` for incremental time-stepping, and `getMoleculeCount()` for efficient state readout. The simulation is lazily initialized on first `update()` call.
-
-## Demo
-
-Generate the interactive HTML report:
+### A Simularium trajectory from a Smoldyn run
 
 ```bash
-python demo/demo_report.py
+python demo/simularium_demo.py out/reaction_diffusion
+# -> out/reaction_diffusion.simularium  (open at simularium.allencell.org, or via
+#    the workbench's Simularium Viewer tool)
 ```
 
-This runs three simulations — two-species diffusion, Lotka-Volterra predator-prey, and Michaelis-Menten enzyme kinetics — and produces `demo/report.html` with:
+Every particle position is Smoldyn's own Brownian dynamics — nothing is
+fabricated.
 
-- Animated 2D particle viewers with time slider
-- Species count time series (Plotly)
-- Phase portraits
-- Bigraph architecture diagrams
-- Interactive PBG document trees
-
-## Simularium export
-
-`SmoldynProcess` emits `molecule_positions` each step, so a run's trajectory can
-be converted to a [Simularium](https://simularium.allencell.org/) file via
-[viva-simularium](https://github.com/vivarium-collective/viva-simularium)'s
-`SimulariumAnalysis` — a post-sim `AnalysisStep` that reads a run's emitted rows
-and writes a `.simularium`. Faithful demo (a real Smoldyn 3D reaction-diffusion
-run through the Engine, no fabricated positions):
+## Run the dashboard locally
 
 ```bash
-python demo/simularium_demo.py out/smoldyn_reaction_diffusion
-# -> out/smoldyn_reaction_diffusion.simularium  (open at simularium.allencell.org)
+pip install vivarium-workbench
+vivarium-workbench serve --workspace .
 ```
 
-In a workbench study, declare it as an analysis and it runs in the Evaluate-stage
-flush over the emitter output.
+Then, per Study:
+- **Model** tab — the composite card plus a **Configuration** block showing the
+  Smoldyn model (species / reactions / bounds) that generates the run.
+- **Simulation** tab / **Runs** — each run advertises the **Simularium Viewer**
+  tool; click it to replay the trajectory.
+- **Analysis** tab — the Simularium Viewer, matched to every study with a
+  trajectory.
 
-## Workspace
+## `SmoldynProcess` reference
 
-This repo is also a process-bigraph **workspace** (`workspace.yaml`, package
-`viva_smoldyn`, entry `viva_smoldyn.build_core`), so it can be served by the
-[vivarium-workbench](https://github.com/vivarium-collective/vivarium-workbench)
-and drive Studies. `build_core()` registers the Smoldyn process, RAM emitter,
-the `SmoldynPlots` visualization, and the `simularium` analysis.
+**Config:** `dimensions` (2/3), `bounds` (per-dim `[low, high]`), `boundary_type`
+(`r`/`p`/`a`), `dt`, `seed`, `species` (`{name: {difc, count, color, display_size}}`),
+`reactions` (`[{name, subs, prds, rate, kb?}]`). Numeric fields are coerced, so
+string-valued params from a dashboard/JSON override work unchanged.
+
+**Outputs:** `molecule_counts` (`map[integer]`), `molecule_positions`
+(`list` of `{type, x, y, z, radius}`), `time` (`float`).
 
 ## Tests
 
