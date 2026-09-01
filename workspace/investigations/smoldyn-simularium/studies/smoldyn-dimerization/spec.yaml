@@ -31,3 +31,4 @@ analyses:
         radius: 2.0
     fmt: json
 status: planned
+investigation: smoldyn-simularium

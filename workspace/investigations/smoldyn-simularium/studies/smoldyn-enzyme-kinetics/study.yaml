@@ -1,40 +1,43 @@
-name: smoldyn-crowding
-description: Three-species differential diffusion (Smoldyn 3D)
+name: smoldyn-enzyme-kinetics
+description: Michaelis-Menten enzyme kinetics (Smoldyn 3D)
 simulations:
 - name: baseline
-  composite: three-species-crowding
+  composite: enzyme-kinetics
   kind: single
   overrides: {}
-  steps: 60
+  steps: 80
 observables: []
 visualizations: []
 analyses:
 - name: simularium
   params:
     box_size:
-    - 60
-    - 60
-    - 60
-    title: Three-species differential diffusion (Smoldyn 3D)
+    - 50
+    - 50
+    - 50
+    title: Michaelis-Menten enzyme kinetics (Smoldyn 3D)
     spatial_unit: nm
     time_unit: s
     display:
-      A:
-        color: '#ff5500'
+      E:
+        color: '#a020f0'
+        radius: 2.0
+      S:
+        color: '#ff9900'
         radius: 1.2
-      B:
-        color: '#33cc66'
-        radius: 1.2
-      C:
+      ES:
+        color: '#ff2222'
+        radius: 2.2
+      P:
         color: '#0088ff'
         radius: 1.2
     fmt: json
 status: planned
-baseline: three-species-crowding
+baseline: enzyme-kinetics
 variants:
-- name: three-species-crowding
-  source: viva_smoldyn.composites.three-species-crowding
-  document: ./composites/three-species-crowding.yaml
+- name: enzyme-kinetics
+  source: viva_smoldyn.composites.enzyme-kinetics
+  document: ./composites/enzyme-kinetics.yaml
 comparisons: []
 groups: []
 conclusions: ''
@@ -42,9 +45,9 @@ question: ''
 hypothesis: ''
 topic: ''
 runs:
-- name: viva_smoldyn.composites.three-species-crowding__1788278394__a66582
+- name: viva_smoldyn.composites.enzyme-kinetics__1788278396__5b743b
   status: completed
-  timestamp: 1788278396.2263758
+  timestamp: 1788278398.583762
   emitter:
     kind: unknown
   env_id: 77a0e9b0df43cbf0
@@ -54,14 +57,14 @@ runs:
   provenance:
     params:
       n_steps:
-        value: 40
+        value: 50
         source: resolved
     params_captured_at: '2026-09-01'
     params_source: dashboard-runner
 simulation_set:
-- name: three-species-crowding
+- name: enzyme-kinetics
   kind: single
-  base_model:
+  base_model: null
   status: ran
 pipeline_gate:
   gate_evaluator:
@@ -69,3 +72,4 @@ pipeline_gate:
     blocked_by: []
     evaluated_by: code
     diverges_from_authored: false
+investigation: smoldyn-simularium

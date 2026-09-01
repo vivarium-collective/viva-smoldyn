@@ -296,5 +296,6 @@ topic: ''
 simulation_set:
 - name: reversible-dimerization
   kind: single
-  base_model:
+  base_model: null
   status: ran
+investigation: smoldyn-simularium
