@@ -1,0 +1,30 @@
+name: three-species-crowding
+description: "Smoldyn 3D differential diffusion: three species (fast red A, medium green B, slow blue C) diffuse from the same start in a reflecting cubic box, demixing by mobility. No reactions — a clean view of Brownian spread rates. Emits per-molecule positions for a Simularium trajectory."
+tags: [particles, diffusion, 3d, simularium]
+requires:
+  processes: [SmoldynProcess, RAMEmitter]
+state:
+  smoldyn:
+    _type: process
+    address: "local:SmoldynProcess"
+    config:
+      dimensions: 3
+      bounds: [[0, 60], [0, 60], [0, 60]]
+      boundary_type: r
+      dt: 0.01
+      seed: 7
+      species:
+        A: {difc: 6.0, count: 120, color: red, display_size: 1.2}
+        B: {difc: 2.0, count: 120, color: green, display_size: 1.2}
+        C: {difc: 0.5, count: 120, color: blue, display_size: 1.2}
+      reactions: []
+    inputs: {}
+    outputs:
+      molecule_counts: ["stores", "molecule_counts"]
+      molecule_positions: ["stores", "molecule_positions"]
+      time: ["stores", "time"]
+    interval: 0.5
+  stores:
+    molecule_counts: {}
+    molecule_positions: []
+    time: 0.0

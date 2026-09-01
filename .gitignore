@@ -9,3 +9,12 @@ demo/*.png
 output/
 *.nc
 .idea/
+
+# Workbench machine state / generated artifacts
+.pbg/
+workspace/reports/
+**/runs.db
+**/runs.db-*
+**/parquet-runs/
+workspace/studies/*/sims/
+workspace/studies/*/viz/report_card/

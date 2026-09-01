@@ -1,0 +1,36 @@
+name: smoldyn-crowding
+description: Three-species differential diffusion (Smoldyn 3D)
+composites:
+- name: three-species-crowding
+  source: viva_smoldyn.composites.three-species-crowding
+  document: ./composites/three-species-crowding.yaml
+simulations:
+- name: baseline
+  composite: three-species-crowding
+  kind: single
+  overrides: {}
+  steps: 60
+observables: []
+visualizations: []
+analyses:
+- name: simularium
+  params:
+    box_size:
+    - 60
+    - 60
+    - 60
+    title: Three-species differential diffusion (Smoldyn 3D)
+    spatial_unit: nm
+    time_unit: s
+    display:
+      A:
+        color: '#ff5500'
+        radius: 1.2
+      B:
+        color: '#33cc66'
+        radius: 1.2
+      C:
+        color: '#0088ff'
+        radius: 1.2
+    fmt: json
+status: planned

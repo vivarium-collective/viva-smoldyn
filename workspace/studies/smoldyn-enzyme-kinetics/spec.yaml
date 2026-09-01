@@ -1,0 +1,39 @@
+name: smoldyn-enzyme-kinetics
+description: Michaelis-Menten enzyme kinetics (Smoldyn 3D)
+composites:
+- name: enzyme-kinetics
+  source: viva_smoldyn.composites.enzyme-kinetics
+  document: ./composites/enzyme-kinetics.yaml
+simulations:
+- name: baseline
+  composite: enzyme-kinetics
+  kind: single
+  overrides: {}
+  steps: 80
+observables: []
+visualizations: []
+analyses:
+- name: simularium
+  params:
+    box_size:
+    - 50
+    - 50
+    - 50
+    title: Michaelis-Menten enzyme kinetics (Smoldyn 3D)
+    spatial_unit: nm
+    time_unit: s
+    display:
+      E:
+        color: '#a020f0'
+        radius: 2.0
+      S:
+        color: '#ff9900'
+        radius: 1.2
+      ES:
+        color: '#ff2222'
+        radius: 2.2
+      P:
+        color: '#0088ff'
+        radius: 1.2
+    fmt: json
+status: planned

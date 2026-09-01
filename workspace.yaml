@@ -3,6 +3,12 @@ name: smoldyn
 created: "2026-09-01"
 package_path: viva_smoldyn
 
+# Persist study runs to parquet (the xarray/zarr default needs Python >= 3.12).
+# Parquet is what the Evaluate-stage analysis flush reads, so the Simularium
+# analysis can rebuild the trajectory from a run's emitted molecule_positions.
+runtime:
+  default_emitter: parquet
+
 # Directory layout. Research directories live under a tidy `workspace/` subtree;
 # the hidden `.pbg/` machine state stays at the root like `.git/`. Removing any
 # key falls back to its flat top-level default.

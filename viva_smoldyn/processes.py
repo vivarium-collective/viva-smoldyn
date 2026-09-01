@@ -7,7 +7,52 @@ advances the simulation by the requested time interval using runUntil(),
 then reads back molecule counts and (optionally) positions.
 """
 
+import contextlib
+import os
+import sys
+
 from process_bigraph import Process
+
+
+@contextlib.contextmanager
+def _suppress_c_output():
+    """Silence Smoldyn's C-level stdout/stderr (its "Simulating" / "setting up"
+    spam) for the duration of a call, at the file-descriptor level so it also
+    catches prints from the compiled library — not just Python's sys.stdout.
+
+    Essential when the process runs inside a subprocess runner (e.g. the
+    vivarium-workbench) that parses a JSON result from the child's stdout: an
+    unsilenced Smoldyn corrupts that stream and the run "can't be parsed".
+    """
+    import ctypes
+    try:
+        _libc = ctypes.CDLL(None)
+    except Exception:  # noqa: BLE001 — no libc handle; Python-level flush only
+        _libc = None
+    sys.stdout.flush()
+    sys.stderr.flush()
+    saved = (os.dup(1), os.dup(2))
+    devnull = os.open(os.devnull, os.O_WRONLY)
+    try:
+        os.dup2(devnull, 1)
+        os.dup2(devnull, 2)
+        yield
+    finally:
+        # Flush the C stdio buffers WHILE devnull is still on fd 1/2 — Smoldyn's
+        # output is fully-buffered under a pipe and would otherwise flush to the
+        # restored real stdout after this block, defeating the suppression.
+        if _libc is not None:
+            try:
+                _libc.fflush(None)
+            except Exception:  # noqa: BLE001
+                pass
+        sys.stdout.flush()
+        sys.stderr.flush()
+        os.dup2(saved[0], 1)
+        os.dup2(saved[1], 2)
+        os.close(saved[0])
+        os.close(saved[1])
+        os.close(devnull)
 
 
 class SmoldynProcess(Process):
@@ -72,41 +117,44 @@ class SmoldynProcess(Process):
         import smoldyn
 
         cfg = self.config
-        low = [b[0] for b in cfg['bounds']]
-        high = [b[1] for b in cfg['bounds']]
+        # Config values may arrive as strings (e.g. from a dashboard's ${param}
+        # substitution or JSON overrides); coerce numeric fields defensively so
+        # the process runs identically regardless of how it was built.
+        low = [float(b[0]) for b in cfg['bounds']]
+        high = [float(b[1]) for b in cfg['bounds']]
 
         self._sim = smoldyn.Simulation(
             low=low,
             high=high,
             boundary_type=cfg['boundary_type'],
-            seed=cfg['seed'],
+            seed=int(cfg['seed']),
         )
 
         # Add species
         for name, spec in cfg['species'].items():
-            difc = spec.get('difc', 1.0)
+            difc = float(spec.get('difc', 1.0))
             color = spec.get('color', 'black')
-            display_size = spec.get('display_size', 3)
+            display_size = float(spec.get('display_size', 3))
             sp = self._sim.addSpecies(
                 name, difc=difc, color=color, display_size=display_size)
-            count = spec.get('count', 0)
+            count = int(spec.get('count', 0))
             if count > 0:
                 sp.addToSolution(count)
             self._species_names.append(name)
             self._species_objects[name] = sp
             # Radius surfaced on emitted positions (viewer sphere size).
-            self._species_radius[name] = float(display_size)
+            self._species_radius[name] = display_size
 
         # Add reactions
         for rxn in cfg['reactions']:
             subs = [self._species_objects[s] for s in rxn.get('subs', [])]
             prds = [self._species_objects[p] for p in rxn.get('prds', [])]
-            rate = rxn.get('rate', 0.0)
+            rate = float(rxn.get('rate', 0.0))
             name = rxn.get('name', 'rxn')
             if 'kb' in rxn:
                 self._sim.addBidirectionalReaction(
                     name, subs=subs, prds=prds,
-                    kf=rate, kb=rxn['kb'])
+                    kf=rate, kb=float(rxn['kb']))
             else:
                 self._sim.addReaction(
                     name, subs=subs, prds=prds, rate=rate)
@@ -120,7 +168,8 @@ class SmoldynProcess(Process):
         self._sim.addCommand(cmd='listmols2 molpos', cmd_type='E')
 
         self._sim.setGraphics('none')
-        self._sim.updateSim()
+        with _suppress_c_output():
+            self._sim.updateSim()
         self._current_time = 0.0
         # NOTE: do NOT read the 'molpos' buffer here — Smoldyn's getOutputData
         # segfaults on it before the first runUntil populates it. Positions
@@ -161,7 +210,7 @@ class SmoldynProcess(Process):
         positions = []
         if mol_data:
             last_step = mol_data[-1][0]
-            dim = self.config['dimensions']
+            dim = int(self.config['dimensions'])
             for row in mol_data:
                 if row[0] != last_step:
                     continue
@@ -189,11 +238,12 @@ class SmoldynProcess(Process):
         self._build_simulation()
 
         target_time = self._current_time + interval
-        self._sim.runUntil(
-            stop=target_time,
-            dt=self.config['dt'],
-            display=False,
-        )
+        with _suppress_c_output():
+            self._sim.runUntil(
+                stop=target_time,
+                dt=float(self.config['dt']),
+                display=False,
+            )
         self._current_time = target_time
 
         # Clear counts data buffer (we use direct queries instead)
