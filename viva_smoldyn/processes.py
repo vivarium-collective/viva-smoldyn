@@ -43,8 +43,10 @@ class SmoldynProcess(Process):
         self._sim = None
         self._species_names = []
         self._species_objects = {}
+        self._species_radius = {}
         self._current_time = 0.0
         self._counts_initialized = False
+        self._last_positions = []
 
     def inputs(self):
         return {}
@@ -52,6 +54,9 @@ class SmoldynProcess(Process):
     def outputs(self):
         return {
             'molecule_counts': 'overwrite[map[integer]]',
+            # Per-step point agents [{type, x, y, z, radius}, ...] — the shape
+            # viva_simularium's SimulariumAnalysis consumes to build a trajectory.
+            'molecule_positions': 'overwrite[list]',
             'time': 'overwrite[float]',
         }
 
@@ -89,6 +94,8 @@ class SmoldynProcess(Process):
                 sp.addToSolution(count)
             self._species_names.append(name)
             self._species_objects[name] = sp
+            # Radius surfaced on emitted positions (viewer sphere size).
+            self._species_radius[name] = float(display_size)
 
         # Add reactions
         for rxn in cfg['reactions']:
@@ -115,6 +122,10 @@ class SmoldynProcess(Process):
         self._sim.setGraphics('none')
         self._sim.updateSim()
         self._current_time = 0.0
+        # NOTE: do NOT read the 'molpos' buffer here — Smoldyn's getOutputData
+        # segfaults on it before the first runUntil populates it. Positions
+        # start empty and are filled by the first update().
+        self._last_positions = []
 
     def _read_counts(self):
         """Read current molecule counts for all species."""
@@ -128,50 +139,51 @@ class SmoldynProcess(Process):
         """Read current simulation state."""
         return {
             'molecule_counts': self._read_counts(),
+            'molecule_positions': list(self._last_positions),
             'time': self._current_time,
         }
 
-    def get_molecule_positions(self):
-        """Return current molecule positions as a list of dicts.
+    def _read_positions(self):
+        """Read + clear the molpos buffer and return the CURRENT snapshot as a
+        list of point agents ``{type, x, y, z, radius}``.
 
-        Each dict has keys: species (str), x (float), y (float),
-        and z (float) for 3D simulations. Must be called after
-        initial_state() or update().
-
-        Returns:
-            list[dict]: Molecule positions at current time.
+        Consumes the buffer (``getOutputData(..., True)`` clears it) so each
+        interval yields only that interval's molecules, and keeps just the last
+        timestep in the buffer (the state at ``_current_time``). Caches the
+        result in ``self._last_positions``.
         """
-        self._build_simulation()
-        dim = self.config['dimensions']
-
-        # Read the position data buffer (from most recent interval)
-        mol_data = self._sim.getOutputData('molpos', True)
-        if not mol_data:
-            return []
-
-        # Species index -> name mapping
-        # Smoldyn species indices: 0=empty, 1=first_species, ...
+        # Species index -> name mapping (Smoldyn: 0=empty, 1=first_species, ...)
         name_map = {0: 'empty'}
         for i, name in enumerate(self._species_names):
             name_map[i + 1] = name
 
-        # Take only the last snapshot (last timestep in the buffer)
-        # Group by step number (first column)
-        last_step = mol_data[-1][0]
+        mol_data = self._sim.getOutputData('molpos', True)
         positions = []
-        for row in mol_data:
-            if row[0] != last_step:
-                continue
-            species_idx = int(row[1])
-            species_name = name_map.get(species_idx, f'unknown_{species_idx}')
-            if species_name == 'empty':
-                continue
-            pos = {'species': species_name, 'x': row[3], 'y': row[4]}
-            if dim >= 3:
-                pos['z'] = row[5]
-            positions.append(pos)
-
+        if mol_data:
+            last_step = mol_data[-1][0]
+            dim = self.config['dimensions']
+            for row in mol_data:
+                if row[0] != last_step:
+                    continue
+                species_name = name_map.get(int(row[1]), f'unknown_{int(row[1])}')
+                if species_name == 'empty':
+                    continue
+                positions.append({
+                    'type': species_name,
+                    'x': float(row[3]),
+                    'y': float(row[4]),
+                    'z': float(row[5]) if dim >= 3 else 0.0,
+                    'radius': self._species_radius.get(species_name, 1.0),
+                })
+        self._last_positions = positions
         return positions
+
+    def get_molecule_positions(self):
+        """Return the most recent molecule positions as a list of point agents
+        ``{type, x, y, z, radius}``. Populated by ``initial_state()`` /
+        ``update()``; ``z`` is 0.0 for 2D simulations."""
+        self._build_simulation()
+        return list(self._last_positions)
 
     def update(self, state, interval):
         self._build_simulation()
@@ -186,5 +198,7 @@ class SmoldynProcess(Process):
 
         # Clear counts data buffer (we use direct queries instead)
         self._sim.getOutputData('counts', True)
+        # Refresh the current molecule-position snapshot for this interval.
+        self._read_positions()
 
         return self._read_state()

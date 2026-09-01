@@ -2,7 +2,7 @@
 
 import pytest
 from process_bigraph import allocate_core
-from pbg_smoldyn.processes import SmoldynProcess
+from viva_smoldyn.processes import SmoldynProcess
 
 
 @pytest.fixture
@@ -112,12 +112,25 @@ def test_molecule_positions(core):
     positions = proc.get_molecule_positions()
     assert len(positions) == 50
     for p in positions:
-        assert 'species' in p
-        assert 'x' in p
-        assert 'y' in p
-        assert p['species'] == 'A'
+        # Simularium-shaped point agents: type / x / y / z / radius.
+        assert p['type'] == 'A'
+        assert {'type', 'x', 'y', 'z', 'radius'} <= set(p)
         assert 0 <= p['x'] <= 100
         assert 0 <= p['y'] <= 100
+        assert p['z'] == 0.0            # 2D sim -> z is 0.0
+
+
+def test_molecule_positions_emitted_from_update(core):
+    """update() emits molecule_positions in the same point-agent shape."""
+    proc = SmoldynProcess(
+        config={'species': {'A': {'difc': 1.0, 'count': 20}},
+                'bounds': [[0, 100], [0, 100]]},
+        core=core)
+    proc.initial_state()
+    out = proc.update({}, interval=1.0)
+    assert 'molecule_positions' in out
+    assert len(out['molecule_positions']) == 20
+    assert out['molecule_positions'][0]['type'] == 'A'
 
 
 def test_outputs_schema(core):
@@ -126,6 +139,7 @@ def test_outputs_schema(core):
         core=core)
     outputs = proc.outputs()
     assert 'molecule_counts' in outputs
+    assert 'molecule_positions' in outputs
     assert 'time' in outputs
 
 

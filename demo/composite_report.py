@@ -1,6 +1,6 @@
 """Composite-driven demo: load a *.composite.yaml, run it, render a report.
 
-Demonstrates the pbg-superpowers composite-spec convention end-to-end:
+Demonstrates the viva-superpowers composite-spec convention end-to-end:
 
     1. List composite specs shipped with the wrapper package.
     2. Load one by name; instantiate a process_bigraph.Composite via the
@@ -23,7 +23,7 @@ import tempfile
 
 from process_bigraph import gather_emitter_results
 
-from pbg_smoldyn.composites import (
+from viva_smoldyn.composites import (
     _COMPOSITES_DIR,
     build_composite,
     list_composite_specs,
@@ -165,7 +165,7 @@ def main(spec_name: str | None = None, n_steps: int = 20,
     if spec_name is None:
         specs = list_composite_specs()
         if not specs:
-            raise SystemExit("No *.composite.yaml found in pbg_smoldyn/composites/")
+            raise SystemExit("No *.composite.yaml found in viva_smoldyn/composites/")
         spec_name = specs[0]
 
     print(f"Running composite '{spec_name}' for {n_steps} steps...")

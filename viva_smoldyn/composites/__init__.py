@@ -7,7 +7,7 @@ Two flavors of composite construction live in this package:
    species / reactions / wiring. Used by `demo/demo_report.py`.
 
 2. **Declarative `*.composite.yaml`** — sibling files in this directory
-   follow the pbg-superpowers composite-spec convention.
+   follow the viva-superpowers composite-spec convention.
    `build_composite()` loads one by name and instantiates
    `process_bigraph.Composite` with parameter substitution.
 
@@ -22,7 +22,7 @@ import yaml
 from process_bigraph import allocate_core
 from process_bigraph.emitter import RAMEmitter
 
-from pbg_smoldyn.processes import SmoldynProcess
+from viva_smoldyn.processes import SmoldynProcess
 
 
 # ---------------------------------------------------------------------------
@@ -38,7 +38,7 @@ def register_smoldyn(core=None):
     core.register_link('SmoldynProcess', SmoldynProcess)
     core.register_link('ram-emitter', RAMEmitter)
     # Register Visualization Steps so composites can wire them by name.
-    from pbg_smoldyn.visualizations import SmoldynPlots
+    from viva_smoldyn.visualizations import SmoldynPlots
     core.register_link('SmoldynPlots', SmoldynPlots)
     return core
 
