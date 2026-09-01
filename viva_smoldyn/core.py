@@ -20,6 +20,19 @@ def build_core(core=None):
     register_types(core)
     core.register_link("SmoldynProcess", SmoldynProcess)
     core.register_link("ram-emitter", RAMEmitter)
+    # Persistent emitters a study composite can declare (the workbench reads the
+    # resulting store in the Evaluate flush). Best-effort: the parquet extra may
+    # be absent in a lean venv.
+    try:
+        from viva_emitters import SQLiteEmitter
+        core.register_link("SQLiteEmitter", SQLiteEmitter)
+    except Exception:  # noqa: BLE001
+        pass
+    try:
+        from viva_emitters import ParquetEmitter
+        core.register_link("ParquetEmitter", ParquetEmitter)
+    except Exception:  # noqa: BLE001
+        pass
 
     from .visualizations import SmoldynPlots
     core.register_link("SmoldynPlots", SmoldynPlots)

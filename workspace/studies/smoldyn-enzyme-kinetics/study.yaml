@@ -44,3 +44,31 @@ conclusions: ''
 question: ''
 hypothesis: ''
 topic: ''
+runs:
+- name: viva_smoldyn.composites.enzyme-kinetics__1788278396__5b743b
+  status: completed
+  timestamp: 1788278398.583762
+  emitter:
+    kind: unknown
+  env_id: 77a0e9b0df43cbf0
+  params: '{}'
+  computed_outcomes:
+    _status: store_unresolved
+  provenance:
+    params:
+      n_steps:
+        value: 50
+        source: resolved
+    params_captured_at: '2026-09-01'
+    params_source: dashboard-runner
+simulation_set:
+- name: enzyme-kinetics
+  kind: single
+  base_model:
+  status: ran
+pipeline_gate:
+  gate_evaluator:
+    result: not_started
+    blocked_by: []
+    evaluated_by: code
+    diverges_from_authored: false

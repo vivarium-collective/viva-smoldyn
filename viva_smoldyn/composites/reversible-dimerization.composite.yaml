@@ -3,10 +3,14 @@ description: "Smoldyn 3D reversible dimerization: fast red monomers A diffuse an
 tags: [particles, reaction-diffusion, 3d, simularium]
 
 requires:
-  processes: [SmoldynProcess, RAMEmitter]
+  processes: [SmoldynProcess]
 
-# Concrete inline values (no ${} templating) so the composite runs directly
-# through the workbench study runner, not only viva_smoldyn.build_composite.
+# Declare a PERSISTENT emitter + the paths it records. The workbench honors this
+# (parquet sink; falls back to the workspace default otherwise) and the study
+# flush reads the resulting store — no RAM emitter, which wouldn't persist.
+emitters:
+  - address: "local:ParquetEmitter"
+    paths: [molecule_counts, molecule_positions, time]
 
 state:
   smoldyn:
@@ -40,11 +44,10 @@ state:
           kb: 0.15
     inputs: {}
     outputs:
-      molecule_counts: ["stores", "molecule_counts"]
-      molecule_positions: ["stores", "molecule_positions"]
-      time: ["stores", "time"]
+      molecule_counts: [molecule_counts]
+      molecule_positions: [molecule_positions]
+      time: [time]
     interval: 0.5
-  stores:
-    molecule_counts: {}
-    molecule_positions: []
-    time: 0.0
+  molecule_counts: {}
+  molecule_positions: []
+  time: 0.0
