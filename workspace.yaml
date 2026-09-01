@@ -1,0 +1,25 @@
+schema_version: 2
+name: smoldyn
+created: "2026-09-01"
+package_path: viva_smoldyn
+
+# Directory layout. Research directories live under a tidy `workspace/` subtree;
+# the hidden `.pbg/` machine state stays at the root like `.git/`. Removing any
+# key falls back to its flat top-level default.
+layout:
+  studies: workspace/studies
+  investigations: workspace/investigations
+  composites: workspace/composites
+  references: workspace/references
+  datasets: workspace/datasets
+  reports: workspace/reports
+
+# The arrays below start empty; the dashboard populates them as you work.
+observables: []
+visualizations: []
+simulations: []
+datasets: []
+
+references_bib: workspace/references/papers.bib
+server:
+  enabled: false

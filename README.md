@@ -1,8 +1,8 @@
-# pbg-smoldyn
+# viva-smoldyn
 
 Process-bigraph wrapper for the [Smoldyn](http://www.smoldyn.org/) particle-based spatial stochastic simulator.
 
-**[View Interactive Demo Report](https://vivarium-collective.github.io/pbg-smoldyn/)** -- MinDE oscillations, Lotka-Volterra, and gene expression with 3D particle viewers, Plotly charts, and bigraph architecture diagrams.
+**[View Interactive Demo Report](https://vivarium-collective.github.io/viva-smoldyn/)** -- MinDE oscillations, Lotka-Volterra, and gene expression with 3D particle viewers, Plotly charts, and bigraph architecture diagrams.
 
 Smoldyn simulates biochemical reaction networks with spatial resolution at the single-molecule level using Brownian dynamics. This package wraps Smoldyn as a `process-bigraph` Process, enabling it to be composed with other simulation tools in modular, hierarchical simulations.
 
@@ -11,8 +11,8 @@ Smoldyn simulates biochemical reaction networks with spatial resolution at the s
 Smoldyn requires building from source on Apple Silicon. After building:
 
 ```bash
-git clone https://github.com/vivarium-collective/pbg-smoldyn.git
-cd pbg-smoldyn
+git clone https://github.com/vivarium-collective/viva-smoldyn.git
+cd viva-smoldyn
 python -m venv .venv
 source .venv/bin/activate
 pip install -e ".[dev]"
@@ -23,7 +23,7 @@ pip install -e ".[dev]"
 ```python
 from process_bigraph import Composite, allocate_core, gather_emitter_results
 from process_bigraph.emitter import RAMEmitter
-from pbg_smoldyn import SmoldynProcess, make_smoldyn_document
+from viva_smoldyn import SmoldynProcess, make_smoldyn_document
 
 core = allocate_core()
 core.register_link('SmoldynProcess', SmoldynProcess)
@@ -71,11 +71,12 @@ A time-driven `Process` that wraps a Smoldyn simulation using the bridge pattern
 | Port | Type | Description |
 |------|------|-------------|
 | `molecule_counts` | map[integer] | Current count per species |
+| `molecule_positions` | list | Per-step point agents `[{type, x, y, z, radius}, ...]` (the shape [viva-simularium](https://github.com/vivarium-collective/viva-simularium) consumes) |
 | `time` | float | Current simulation time |
 
 **Additional methods:**
 
-- `get_molecule_positions()` — Returns list of `{species, x, y [, z]}` dicts for all molecules at current time.
+- `get_molecule_positions()` — Returns the current positions as a list of point agents `{type, x, y, z, radius}` (`z` is 0.0 for 2D sims).
 
 ### make_smoldyn_document()
 
@@ -122,6 +123,31 @@ This runs three simulations — two-species diffusion, Lotka-Volterra predator-p
 - Phase portraits
 - Bigraph architecture diagrams
 - Interactive PBG document trees
+
+## Simularium export
+
+`SmoldynProcess` emits `molecule_positions` each step, so a run's trajectory can
+be converted to a [Simularium](https://simularium.allencell.org/) file via
+[viva-simularium](https://github.com/vivarium-collective/viva-simularium)'s
+`SimulariumAnalysis` — a post-sim `AnalysisStep` that reads a run's emitted rows
+and writes a `.simularium`. Faithful demo (a real Smoldyn 3D reaction-diffusion
+run through the Engine, no fabricated positions):
+
+```bash
+python demo/simularium_demo.py out/smoldyn_reaction_diffusion
+# -> out/smoldyn_reaction_diffusion.simularium  (open at simularium.allencell.org)
+```
+
+In a workbench study, declare it as an analysis and it runs in the Evaluate-stage
+flush over the emitter output.
+
+## Workspace
+
+This repo is also a process-bigraph **workspace** (`workspace.yaml`, package
+`viva_smoldyn`, entry `viva_smoldyn.build_core`), so it can be served by the
+[vivarium-workbench](https://github.com/vivarium-collective/vivarium-workbench)
+and drive Studies. `build_core()` registers the Smoldyn process, RAM emitter,
+the `SmoldynPlots` visualization, and the `simularium` analysis.
 
 ## Tests
 

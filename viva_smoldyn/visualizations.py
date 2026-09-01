@@ -1,6 +1,6 @@
-"""Visualization Step subclasses for pbg-smoldyn.
+"""Visualization Step subclasses for viva-smoldyn.
 
-Visualizations follow the pbg-superpowers convention (v0.4.15+):
+Visualizations follow the viva-superpowers convention (v0.4.15+):
 each subclass overrides `update()` to consume per-step state via wires
 (like an Emitter), accumulates history internally, and returns
 ``{'html': '<rendered figure>'}`` each step. The composite spec wires

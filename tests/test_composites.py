@@ -3,8 +3,8 @@
 import pytest
 from process_bigraph import Composite, allocate_core, gather_emitter_results
 from process_bigraph.emitter import RAMEmitter
-from pbg_smoldyn.processes import SmoldynProcess
-from pbg_smoldyn.composites import make_smoldyn_document
+from viva_smoldyn.processes import SmoldynProcess
+from viva_smoldyn.composites import make_smoldyn_document
 
 
 @pytest.fixture
