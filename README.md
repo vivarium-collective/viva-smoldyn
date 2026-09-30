@@ -37,14 +37,47 @@ as Studies.
 
 ## Installation
 
-Smoldyn ships a Python module; on Apple Silicon use a native (arm64) build. Then:
-
 ```bash
 git clone https://github.com/vivarium-collective/viva-smoldyn.git
 cd viva-smoldyn
 python -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"
 ```
+
+### Apple Silicon (arm64) note
+
+`viva-smoldyn` depends on `smoldyn` (from PyPI). **The PyPI `smoldyn` wheel for
+macOS is x86_64-only** — the wheel tagged for Apple Silicon actually ships an
+x86_64 binary (`_smoldyn…darwin.so: Mach-O … x86_64`), and there is no Python
+3.12 wheel — so on an arm64 Mac a plain `pip install` gives
+`import smoldyn` → `ImportError: incompatible architecture`. Two ways to get a
+working Smoldyn first, then install viva-smoldyn on top:
+
+**A. Native arm64 (recommended) — build Smoldyn from source.** Requires CMake and
+a C/C++ toolchain (`xcode-select --install`):
+
+```bash
+# in the same venv, BEFORE `pip install -e .`
+git clone https://github.com/ssandrews/Smoldyn.git
+pip install ./Smoldyn            # builds the smoldyn Python module natively for arm64
+python -c "import smoldyn; print(smoldyn.__version__)"   # verify it imports
+pip install -e .                 # smoldyn is already satisfied; won't re-pull the wheel
+```
+
+(See <https://www.smoldyn.org/download.html> if the source layout changes.)
+
+**B. Stopgap — run under an x86_64 (Rosetta) Python.** The x86_64 wheel *does*
+work in an x86_64 interpreter:
+
+```bash
+softwareupdate --install-rosetta --agree-to-license   # once, if needed
+arch -x86_64 /usr/bin/python3 -m venv .venv-x86
+source .venv-x86/bin/activate
+arch -x86_64 pip install -e ".[dev]"                  # pulls the x86_64 smoldyn wheel
+```
+
+The underlying wheel bug is upstream in Smoldyn, tracked at
+<https://github.com/ssandrews/Smoldyn>.
 
 ## Quick start
 
