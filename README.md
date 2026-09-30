@@ -67,17 +67,23 @@ pip install -e .                 # smoldyn is already satisfied; won't re-pull t
 (See <https://www.smoldyn.org/download.html> if the source layout changes.)
 
 **B. Stopgap — run under an x86_64 (Rosetta) Python.** The x86_64 wheel *does*
-work in an x86_64 interpreter:
+work in an x86_64 interpreter. Make the venv an x86_64 Python 3.11 (verified: all
+tests pass this way):
 
 ```bash
 softwareupdate --install-rosetta --agree-to-license   # once, if needed
-arch -x86_64 /usr/bin/python3 -m venv .venv-x86
-source .venv-x86/bin/activate
-arch -x86_64 pip install -e ".[dev]"                  # pulls the x86_64 smoldyn wheel
+uv venv --python cpython-3.11-macos-x86_64 .venv       # x86_64 interpreter
+source .venv/bin/activate
+uv pip install -e ".[dev]"                             # pulls the x86_64 smoldyn wheel
 ```
 
-The underlying wheel bug is upstream in Smoldyn, tracked at
-<https://github.com/ssandrews/Smoldyn>.
+Note: Python 3.11 rules out the xarray/zarr emitter (it needs 3.12+); this
+workspace defaults to the parquet emitter, so that is fine.
+
+Also broken: the `smoldyn==2.76.dev…` pre-releases are tagged `py3-none-any` but
+contain only a Windows binary (`_smoldyn.cp311-win_amd64.pyd`) → `import smoldyn`
+fails with `No module named 'smoldyn._smoldyn'`. The underlying wheel bug is
+upstream in Smoldyn (<https://github.com/ssandrews/Smoldyn>).
 
 ## Quick start
 
