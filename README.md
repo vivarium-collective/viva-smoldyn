@@ -37,14 +37,53 @@ as Studies.
 
 ## Installation
 
-Smoldyn ships a Python module; on Apple Silicon use a native (arm64) build. Then:
-
 ```bash
 git clone https://github.com/vivarium-collective/viva-smoldyn.git
 cd viva-smoldyn
 python -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"
 ```
+
+### Apple Silicon (arm64) note
+
+`viva-smoldyn` depends on `smoldyn` (from PyPI). **The PyPI `smoldyn` wheel for
+macOS is x86_64-only** — the wheel tagged for Apple Silicon actually ships an
+x86_64 binary (`_smoldyn…darwin.so: Mach-O … x86_64`), and there is no Python
+3.12 wheel — so on an arm64 Mac a plain `pip install` gives
+`import smoldyn` → `ImportError: incompatible architecture`. Two ways to get a
+working Smoldyn first, then install viva-smoldyn on top:
+
+**A. Native arm64 (recommended) — build Smoldyn from source.** Requires CMake and
+a C/C++ toolchain (`xcode-select --install`):
+
+```bash
+# in the same venv, BEFORE `pip install -e .`
+git clone https://github.com/ssandrews/Smoldyn.git
+pip install ./Smoldyn            # builds the smoldyn Python module natively for arm64
+python -c "import smoldyn; print(smoldyn.__version__)"   # verify it imports
+pip install -e .                 # smoldyn is already satisfied; won't re-pull the wheel
+```
+
+(See <https://www.smoldyn.org/download.html> if the source layout changes.)
+
+**B. Stopgap — run under an x86_64 (Rosetta) Python.** The x86_64 wheel *does*
+work in an x86_64 interpreter. Make the venv an x86_64 Python 3.11 (verified: all
+tests pass this way):
+
+```bash
+softwareupdate --install-rosetta --agree-to-license   # once, if needed
+uv venv --python cpython-3.11-macos-x86_64 .venv       # x86_64 interpreter
+source .venv/bin/activate
+uv pip install -e ".[dev]"                             # pulls the x86_64 smoldyn wheel
+```
+
+Note: Python 3.11 rules out the xarray/zarr emitter (it needs 3.12+); this
+workspace defaults to the parquet emitter, so that is fine.
+
+Also broken: the `smoldyn==2.76.dev…` pre-releases are tagged `py3-none-any` but
+contain only a Windows binary (`_smoldyn.cp311-win_amd64.pyd`) → `import smoldyn`
+fails with `No module named 'smoldyn._smoldyn'`. The underlying wheel bug is
+upstream in Smoldyn (<https://github.com/ssandrews/Smoldyn>).
 
 ## Quick start
 
