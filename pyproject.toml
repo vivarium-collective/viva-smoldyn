@@ -4,13 +4,14 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "viva-smoldyn"
-version = "0.1.0"
+version = "0.1.1"
 description = "Process-bigraph wrapper for Smoldyn spatial stochastic simulator"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
-    "process-bigraph>=0.0.10",
+    "process-bigraph>=1.8.5",
     "bigraph-schema",
+    "viva-emitters>=0.4.2",
     "viva-superpowers",
     "viva-simularium",
     "smoldyn",
