@@ -1,10 +1,11 @@
 """Visualization Step subclasses for viva-smoldyn.
 
-Visualizations follow the viva-superpowers convention (v0.4.15+):
-each subclass overrides `update()` to consume per-step state via wires
-(like an Emitter), accumulates history internally, and returns
-``{'html': '<rendered figure>'}`` each step. The composite spec wires
-the input ports to store paths.
+Visualizations follow the new-style viva-superpowers convention: each
+subclass consumes per-step state via wires (like an Emitter), buffers the
+per-step history in ``accumulate(state)`` (no rendering), and builds the
+Plotly figure ONCE in ``render() -> str``. The baseclass orchestrator owns
+``update()`` — subclasses do NOT override it. The composite spec wires the
+input ports to store paths.
 
 See viva_superpowers.visualization for the base-class contract.
 """
@@ -17,9 +18,10 @@ class SmoldynPlots(Visualization):
     """Time-series HTML plot of Smoldyn's per-species molecule counts.
 
     Consumes the wrapper's `molecule_counts` (a map of species -> count) and
-    `time` at each step, accumulates them across calls, and emits a Plotly
-    HTML figure on every update. Downstream consumers (dashboards, notebook
-    viewers) read the latest 'html' from the wired store.
+    `time` at each step, buffering them across calls in ``accumulate``. The
+    Plotly HTML figure is built once in ``render`` at end-of-run (instead of
+    rebuilt on every tick). Downstream consumers (dashboards, notebook
+    viewers) read the rendered 'html' from the wired store.
     """
 
     config_schema = {
@@ -38,8 +40,9 @@ class SmoldynPlots(Visualization):
             'time': 'float',
         }
 
-    def update(self, state, interval=1.0):
-        t = float(state.get('time', len(self.times) * (interval or 1.0)))
+    def accumulate(self, state):
+        """Buffer one step of counts — no figure build."""
+        t = float(state.get('time', len(self.times)))
         self.times.append(t)
 
         counts = state.get('molecule_counts') or {}
@@ -58,6 +61,8 @@ class SmoldynPlots(Visualization):
             while len(ys) < len(self.times):
                 ys.append(0)
 
+    def render(self) -> str:
+        """Build the Plotly figure once from the accumulated history."""
         title = (self.config or {}).get('title', 'Smoldyn molecule counts')
         traces = []
         for sp, ys in sorted(self.history.items()):
@@ -74,4 +79,4 @@ class SmoldynPlots(Visualization):
             f'legend:{{orientation:"h",y:-0.2}}}},'
             f'{{responsive:true,displayModeBar:false}});</script>'
         )
-        return {'html': html}
+        return html
