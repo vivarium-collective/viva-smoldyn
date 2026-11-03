@@ -51,53 +51,48 @@ as Studies.
 
 ## Installation
 
+Smoldyn must be importable before viva-smoldyn is installed. The PyPI `smoldyn`
+2.76 wheel has no CPython 3.12 binary: `import smoldyn` fails with
+`ModuleNotFoundError: No module named 'smoldyn._smoldyn'` on Linux x86_64 and on
+macOS arm64 under CPython 3.12. (It imports under CPython 3.14 on macOS arm64.)
+
+**1. Install a working Smoldyn.** On Linux x86_64 with CPython 3.12, use the
+virtualcell fork build (sha256 `bb033bcc…d29d14`):
+
 ```bash
-git clone https://github.com/vivarium-collective/viva-smoldyn.git
-cd viva-smoldyn
 python -m venv .venv && source .venv/bin/activate
+pip install "https://github.com/virtualcell/Smoldyn/releases/download/vcell-pyhybrid-e86d552/smoldyn-2.76.dev0%2Bvcell.e86d552-cp312-cp312-linux_x86_64.whl#sha256=bb033bccff9481a075603d4a79fefe249b152fac5544a716adf16761adc29d14"
+python -c "import smoldyn"    # must succeed
+```
+
+On macOS arm64, use a CPython 3.14 venv (`uv venv --python 3.14 .venv`), where
+`pip install smoldyn` from PyPI imports. Other platforms: build Smoldyn from
+source (<https://www.smoldyn.org/download.html>, Python bindings from
+<https://github.com/ssandrews/Smoldyn>).
+
+**2. Install viva-smoldyn.** The package itself is unpinned for Smoldyn, so step 1
+satisfies it:
+
+```bash
 pip install -e ".[dev]"
 ```
 
-### Apple Silicon (arm64) note
+**Optional extras.** Neither is needed for the default `build_core()` /
+`build_composite()` path.
 
-`viva-smoldyn` depends on `smoldyn` (from PyPI). **The PyPI `smoldyn` wheel for
-macOS is x86_64-only** — the wheel tagged for Apple Silicon actually ships an
-x86_64 binary (`_smoldyn…darwin.so: Mach-O … x86_64`), and there is no Python
-3.12 wheel — so on an arm64 Mac a plain `pip install` gives
-`import smoldyn` → `ImportError: incompatible architecture`. Two ways to get a
-working Smoldyn first, then install viva-smoldyn on top:
+- `dashboard` (`pip install -e ".[dashboard]"`): the `SmoldynPlots` Visualization
+  for the workbench dashboard. Installs viva-superpowers, which requires
+  `bigraph-schema>=1.8.2`.
+- Simularium export (`SimulariumAnalysis`, used by `demo/simularium_demo.py` and
+  `tests/test_simularium.py`): `viva-simularium` is not on PyPI, so install it
+  from the pinned commit:
 
-**A. Native arm64 (recommended) — build Smoldyn from source.** Requires CMake and
-a C/C++ toolchain (`xcode-select --install`):
+  ```bash
+  pip install "viva-simularium @ git+https://github.com/vivarium-collective/viva-simularium.git@525f1ca73470817f43cfe416408447534cc63277"
+  ```
 
-```bash
-# in the same venv, BEFORE `pip install -e .`
-git clone https://github.com/ssandrews/Smoldyn.git
-pip install ./Smoldyn            # builds the smoldyn Python module natively for arm64
-python -c "import smoldyn; print(smoldyn.__version__)"   # verify it imports
-pip install -e .                 # smoldyn is already satisfied; won't re-pull the wheel
-```
-
-(See <https://www.smoldyn.org/download.html> if the source layout changes.)
-
-**B. Stopgap — run under an x86_64 (Rosetta) Python.** The x86_64 wheel *does*
-work in an x86_64 interpreter. Make the venv an x86_64 Python 3.11 (verified: all
-tests pass this way):
-
-```bash
-softwareupdate --install-rosetta --agree-to-license   # once, if needed
-uv venv --python cpython-3.11-macos-x86_64 .venv       # x86_64 interpreter
-source .venv/bin/activate
-uv pip install -e ".[dev]"                             # pulls the x86_64 smoldyn wheel
-```
-
-Note: Python 3.11 rules out the xarray/zarr emitter (it needs 3.12+); this
-workspace defaults to the parquet emitter, so that is fine.
-
-Also broken: the `smoldyn==2.76.dev…` pre-releases are tagged `py3-none-any` but
-contain only a Windows binary (`_smoldyn.cp311-win_amd64.pyd`) → `import smoldyn`
-fails with `No module named 'smoldyn._smoldyn'`. The underlying wheel bug is
-upstream in Smoldyn (<https://github.com/ssandrews/Smoldyn>).
+  With uv, `uv sync` installs it from the same pin (`[dependency-groups]
+  simularium` in `pyproject.toml`).
 
 ## Quick start
 

@@ -34,8 +34,16 @@ def build_core(core=None):
     except Exception:  # noqa: BLE001
         pass
 
-    from .visualizations import SmoldynPlots
-    core.register_link("SmoldynPlots", SmoldynPlots)
+    # Visualization Steps are dashboard-only and need viva-superpowers (the
+    # `dashboard` extra). Without it they stay unregistered; any other
+    # ImportError is a real defect and propagates.
+    try:
+        from .visualizations import SmoldynPlots
+    except ModuleNotFoundError as exc:
+        if exc.name is None or not exc.name.startswith("viva_superpowers"):
+            raise
+    else:
+        core.register_link("SmoldynPlots", SmoldynPlots)
 
     # Post-sim Simularium converter (viva_simularium). Importing it registers
     # it in viva_superpowers' ANALYSIS_REGISTRY (name "simularium") so a study's

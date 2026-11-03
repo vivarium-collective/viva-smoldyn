@@ -37,9 +37,16 @@ def register_smoldyn(core=None):
         core = allocate_core()
     core.register_link('SmoldynProcess', SmoldynProcess)
     core.register_link('ram-emitter', RAMEmitter)
-    # Register Visualization Steps so composites can wire them by name.
-    from viva_smoldyn.visualizations import SmoldynPlots
-    core.register_link('SmoldynPlots', SmoldynPlots)
+    # Visualization Steps are dashboard-only and need viva-superpowers (the
+    # `dashboard` extra). Without it they stay unregistered; any other
+    # ImportError is a real defect and propagates.
+    try:
+        from viva_smoldyn.visualizations import SmoldynPlots
+    except ModuleNotFoundError as exc:
+        if exc.name is None or not exc.name.startswith("viva_superpowers"):
+            raise
+    else:
+        core.register_link('SmoldynPlots', SmoldynPlots)
     return core
 
 

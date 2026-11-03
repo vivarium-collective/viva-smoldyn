@@ -4,11 +4,15 @@ Exercises the real seam viva-smoldyn ships for: SmoldynProcess emits
 molecule_positions in the point-agent shape, and viva_simularium's
 SimulariumAnalysis turns a run's emitted rows into a Simularium file.
 """
+import pytest
 from bigraph_schema import allocate_core
 from process_bigraph import Composite, gather_emitter_results
 
-from viva_simularium import SimulariumAnalysis
-from viva_smoldyn.composites import register_smoldyn
+# Simularium is the optional `simularium` dependency group (git-pinned); skip
+# where it is not installed, e.g. the composed environment.
+SimulariumAnalysis = pytest.importorskip("viva_simularium").SimulariumAnalysis
+
+from viva_smoldyn.composites import register_smoldyn  # noqa: E402
 
 
 def _document(interval):
