@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "viva-smoldyn"
-version = "0.1.2"
+version = "0.2.0"
 description = "Process-bigraph wrapper for Smoldyn spatial stochastic simulator"
 readme = "README.md"
 license = { text = "MIT" }
@@ -13,19 +13,36 @@ dependencies = [
     "process-bigraph>=1.8.5",
     "bigraph-schema",
     "viva-emitters>=0.4.2",
-    "viva-superpowers",
-    "viva-simularium",
+    # The PyPI `smoldyn` 2.76 wheel does not import on Linux CPython 3.12 (no
+    # matching _smoldyn binary). Install a working build first; see README
+    # "Installation". Unversioned on purpose: the fork's 2.76.dev0+vcell build
+    # would not satisfy a `>=2.76` pin.
     "smoldyn",
     "numpy",
     "pyyaml",
 ]
 
 [project.optional-dependencies]
+# Dashboard visualizations (SmoldynPlots). Not needed by the default
+# build_core()/build_composite() path. Requires bigraph-schema>=1.8.2.
+dashboard = ["viva-superpowers"]
 dev = ["pytest", "bigraph-viz"]
 
+[dependency-groups]
+# Simularium export (SimulariumAnalysis). Not on PyPI, so it is pinned to a
+# commit via [tool.uv.sources] for uv. pip users install it explicitly, see
+# README "Installation". It pulls in viva-superpowers, so it is not part of the
+# default install.
+simularium = ["viva-simularium"]
+
+[tool.uv]
+default-groups = ["dev", "simularium"]
+
 [tool.uv.sources]
-viva-superpowers = { git = "https://github.com/vivarium-collective/viva-superpowers.git", branch = "main" }
-viva-simularium = { git = "https://github.com/vivarium-collective/viva-simularium.git", branch = "main" }
+viva-simularium = { git = "https://github.com/vivarium-collective/viva-simularium.git", rev = "525f1ca73470817f43cfe416408447534cc63277" }
 
 [tool.setuptools.packages.find]
 include = ["viva_smoldyn*"]
+
+[tool.setuptools.package-data]
+viva_smoldyn = ["composites/*.yaml"]
