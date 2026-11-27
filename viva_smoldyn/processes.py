@@ -10,7 +10,9 @@ then reads back molecule counts and (optionally) positions.
 import contextlib
 import os
 import sys
+import tempfile
 
+import numpy as np
 from process_bigraph import Process
 
 
@@ -252,3 +254,129 @@ class SmoldynProcess(Process):
         self._read_positions()
 
         return self._read_state()
+
+
+class SmoldynHybridProcess(Process):
+    """Field-coupled Smoldyn particle process (virtualcell/Smoldyn ``pyhybrid``).
+
+    The spatial-stochastic counterpart to :class:`SmoldynProcess` for **hybrid
+    PDE/particle** co-simulation: continuous fields are copied into a
+    ``smoldyn.HybridGrid`` each update so reaction rates written ``k*B;`` read the
+    field at each molecule (or at each grid node for 0th-order creation). Smoldyn
+    advances, and the process returns per-node particle counts binned on the same
+    grid — the shape a PDE solver on the matching grid consumes.
+
+    Unlike :class:`SmoldynProcess` (which builds the model from species/reaction
+    config), this takes a Smoldyn ``config_text`` already written for the hybrid
+    build, plus the shared grid, so a composite can couple it to any PDE engine on
+    the identical ``{origin, size, num}`` grid.
+
+    The engine has no notion of the PDE clock: each update reads the fields at its
+    start and advances Smoldyn by the update interval (whole steps of
+    ``step_multiplier·dt``). Scheduling (start-of-interval vs fvsolver timing) is
+    the composite's job.
+
+    Requires a Smoldyn build with the hybrid API (``smoldyn._smoldyn.HybridGrid``;
+    the vcell fork). On a standard Smoldyn build the process raises on build.
+
+    Config:
+        grid: ``{origin, size, num}`` — the shared structured grid (identical shape
+            and meaning as the coupled PDE process uses).
+        config_text: Smoldyn configuration text with ``time_step`` = k·dt.
+        particle_species: species whose per-node counts are reported.
+        field_species: continuous species referenced by rate expressions.
+        dt: PDE time step (s).
+        step_multiplier: k; the Smoldyn time step is k·dt and must match ``config_text``.
+        quiet: silence Smoldyn's C-level log output.
+        emit_positions: also report molecule positions on ``particle_positions``.
+    """
+
+    config_schema = {
+        "grid": "map",
+        "config_text": "string",
+        "particle_species": "list[string]",
+        "field_species": {"_type": "list[string]", "_default": []},
+        "dt": {"_type": "float", "_default": 0.01},
+        "step_multiplier": {"_type": "integer", "_default": 1},
+        "quiet": {"_type": "boolean", "_default": True},
+        "emit_positions": {"_type": "boolean", "_default": False},
+    }
+
+    def initialize(self, config):
+        import smoldyn._smoldyn as _smoldyn
+
+        grid = config["grid"]
+        origin = [float(v) for v in grid["origin"]]
+        size = [float(v) for v in grid["size"]]
+        num = [int(v) for v in grid["num"]]
+        if not (len(origin) == len(size) == len(num)) or not 1 <= len(num) <= 3:
+            raise ValueError("grid origin, size and num must have equal length 1, 2 or 3")
+
+        self.k = int(config["step_multiplier"])
+        self.dt = float(config["dt"])
+        self.smoldyn_dt = self.k * self.dt
+        self.particle_species = list(config["particle_species"])
+        self.field_species = list(config["field_species"])
+        self.time = 0.0
+
+        self.hybrid_grid = _smoldyn.HybridGrid(origin, size, num)
+        self._workdir = tempfile.TemporaryDirectory(prefix="smoldyn-hybrid-")
+        path = os.path.join(self._workdir.name, "model.txt")
+        with open(path, "w") as f:
+            f.write(config["config_text"])
+        quiet = _suppress_c_output() if config["quiet"] else contextlib.nullcontext()
+        with quiet:
+            self.sim = _smoldyn.Simulation(path, "q", self.hybrid_grid)
+        missing = set(self.hybrid_grid.requiredFields()) - set(self.field_species)
+        if missing:
+            raise ValueError(
+                f"rate expressions reference fields not in field_species: {sorted(missing)}")
+
+    def inputs(self):
+        return {"fields": "map[array[float]]"}
+
+    def outputs(self):
+        return {
+            "particle_counts": "map[overwrite[array[float]]]",
+            "particle_totals": "map[overwrite[float]]",
+            "particle_positions": "map[overwrite[array[float]]]",
+        }
+
+    def counts(self):
+        return {
+            s: self.sim.getMoleculeHistogram(s, self.hybrid_grid).astype(float)
+            for s in self.particle_species
+        }
+
+    def positions(self):
+        """Molecule positions (n, dim) per particle species (copies, not views)."""
+        return {s: np.array(self.sim.getMoleculePositions(s), dtype=float)
+                for s in self.particle_species}
+
+    def _report(self):
+        counts = self.counts()
+        out = {
+            "particle_counts": counts,
+            "particle_totals": {s: float(c.sum()) for s, c in counts.items()},
+        }
+        if self.config["emit_positions"]:
+            out["particle_positions"] = self.positions()
+        return out
+
+    def initial_state(self):
+        return self._report()
+
+    def _run(self, fields, n_steps):
+        for name in self.field_species:
+            self.hybrid_grid.setField(name, np.asarray(fields[name], dtype=float))
+        # exactly n Smoldyn steps: a step is taken while time < breaktime
+        breaktime = self.time + (n_steps - 0.5) * self.smoldyn_dt
+        quiet = _suppress_c_output() if self.config["quiet"] else contextlib.nullcontext()
+        with quiet:
+            self.sim.runUntil(breaktime, self.smoldyn_dt, False)
+        self.time += n_steps * self.smoldyn_dt
+
+    def update(self, state, interval):
+        n_steps = max(1, int(round(interval / self.smoldyn_dt)))
+        self._run(state.get("fields", {}), n_steps)
+        return self._report()

@@ -10,7 +10,7 @@ from __future__ import annotations
 from process_bigraph import allocate_core
 from process_bigraph.emitter import RAMEmitter
 
-from .processes import SmoldynProcess
+from .processes import SmoldynHybridProcess, SmoldynProcess
 from .types import register_types
 
 
@@ -19,6 +19,7 @@ def build_core(core=None):
         core = allocate_core()
     register_types(core)
     core.register_link("SmoldynProcess", SmoldynProcess)
+    core.register_link("SmoldynHybridProcess", SmoldynHybridProcess)
     core.register_link("ram-emitter", RAMEmitter)
     # Persistent emitters a study composite can declare (the workbench reads the
     # resulting store in the Evaluate flush). Best-effort: the parquet extra may
